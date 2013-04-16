@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<html ng-app="myApp">
+    <head>
+        <title>{{title}}</title>
+        <link rel="stylesheet" type="text/css" href="css/main.css">
+    </head>
+    <body ng-controller="MainCtrl">
+        <h1 contenteditable="true" ng-model="title" ng-cloak>{{title}}</h1>
+        <h2>{{date | date:'dd MMMM yyyy'}}</h2>
+      <!--  <div ng-view></div>-->
+      
+<dl>
+  <dt>Endpoint:</dt>
+  <!--<dd contenteditable="true" ng-model="endpoint" class="line" ng-cloak>{{endpoint}}</dd>-->
+  <dd><input ng-model="endpoint" ng-cloak></input></dd>
+  <dd ng-hide="validEndpoint" style="color:red;" ng-cloak><b>Could not connect to the endpoint!</b></dd>
+  <dt>Graph:</dt>
+  <dd><select ng-model="selectedGraph" ng-options="graph as graph for graph in graphs"></select></dd>
+</dl>
+
+<h2 id="sec-toc">Table of contents</h2>
+<ul>
+  <li><a href="#sec-intro">1. Introduction</a></li>
+  <li><a href="#sec-vocab">2. Used vocabularies</a></li>
+  <li><a href="#sec-classes">3. Used classes</a></li>
+  <li><a href="#sec-properties">4. Used properties</a></li>
+  <li><a href="#sec-about">5. How to use this documentation</a></li>
+</ul>
+
+<div class="intro">
+<h2 id="sec-intro">Introduction</h2>
+
+<p>This site generates SPARQL-endpoint documentation on the fly. Documentation describes the implicit and explicit classes and properties used in the endpoint. You can change the endpoint and select distinct graph, or use default. </p>    
+<p ng-hide="ready">This documentation is currently being generated ...</p>
+<p ng-show="ready">The generated documentation is ready. You can <a href="{{b64}}">'Save as'</a> static version of this documentation ("Early prototype").</p>
+</div>
+
+<div class="generated" ng-show="validEndpoint">
+<!-- These are shown only if the endpoint is valid -->
+
+<div class="vocab">
+<h2 id="sec-vocab">Used vocabularies</h2>
+<p>This endpoint uses following vocabularies and namespaces.</p>
+    <div class="box">
+      <div ng-repeat="(key,prefix) in namespaces">
+      PREFIX {{prefix}}: &lt;<a href="{{key}}">{{key}}</a>&gt;</br>
+    </div>
+        
+    </div>
+</div>
+
+<div class="glance">
+<h2 id="sec-classes">Used classes</h2>
+<p>These classes are used to describe resources in this endpoint.</p>
+<div class="box">
+   |<span ng-repeat="class in classes"> <a href="#{{class.c.resolved.prefixed}}">{{class.c.resolved.prefixed}}</a> |</span> 
+</div>
+
+<div ng-repeat="class in classes" class="specterm" id="{{class.c.resolved.prefixed}}">
+    <h3>{{class.c.resolved.prefixed}}</h3>
+    <p><b>URI:</b> <a href="{{class.c.value}}">{{class.c.value}}</a></p>
+    <p><i>This class is used by this endpoint. Follow the uri to the original specification. These are the used properties.</i></p>
+    <h4>List of of used properties</h4>
+    <div class="box">
+        |<span ng-repeat="property in class.c.properties"> <a href="#{{property.p.resolved.prefixed}}">{{property.p.resolved.prefixed}}</a> |</span>
+    </div>
+    <h4>Example query</h4>
+    <code><pre>{{class.c.example}}</pre></code>
+</div> 
+</div>
+
+<div class="glance">
+<h2 id="sec-properties">Used properties</h2>
+<p>These are the properties used in this endpoint. Properties could be used by multiple classes that describe the resources.</p>
+<div class="box">
+   |<span ng-repeat="property in properties"> <a href="#{{property.prefixed}}">{{property.prefixed}}</a> |</span> 
+</div>
+
+<div ng-repeat="(key,property) in properties" class="specterm" id="{{property.prefixed}}">
+    <h3>{{property.prefixed}}</h3>
+    <p><b>Identifier:</b> {{key}}</p>
+</div>
+
+</div>
+
+
+</div>
+
+
+      
+    </body>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/modules.js"></script>
+    <script src="js/controls.js"></script>
+</html>

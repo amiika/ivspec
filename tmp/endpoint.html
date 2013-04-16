@@ -1,0 +1,21 @@
+<dl>
+  <dt>Endpoint:</dt>
+  <dd contenteditable="true" ng-model="endpoint" class="line">{{endpoint}}</dd>
+</dl>
+<hr>
+
+
+<div class="glance">
+<h2 id="sec-glance">Used classes at a glance</h2>
+
+<div class="box">
+    <span ng-repeat="class in classes"><a href="#{{class.c.resolved.prefixed}}">{{class.c.resolved.prefixed}}</a> | </span>
+</div>
+
+</div>
+
+<div ng-repeat="class in classes" class="specterm" id="{{class.c.resolved.prefixed}}">
+    <h3>Class: {{class.c.resolved.prefixed}}</h3>
+    
+</div>
+ 
