@@ -1,96 +1,385 @@
 <!DOCTYPE HTML>
 <html ng-app="myApp">
-    <head>
-        <title>{{title}}</title>
-        <link rel="stylesheet" type="text/css" href="css/main.css">
-    </head>
-    <body ng-controller="MainCtrl">
-        <h1 contenteditable="true" ng-model="title" ng-cloak>{{title}}</h1>
-        <h2>{{date | date:'dd MMMM yyyy'}}</h2>
-      <!--  <div ng-view></div>-->
-      
-<dl>
-  <dt>Endpoint:</dt>
-  <!--<dd contenteditable="true" ng-model="endpoint" class="line" ng-cloak>{{endpoint}}</dd>-->
-  <dd><input ng-model="endpoint" ng-cloak></input></dd>
-  <dd ng-hide="validEndpoint" style="color:red;" ng-cloak><b>Could not connect to the endpoint!</b></dd>
-  <dt>Graph:</dt>
-  <dd><select ng-model="selectedGraph" ng-options="graph as graph for graph in graphs"></select></dd>
-</dl>
+	<head>
+		<title>{{title}}</title>
+		<meta charset="utf-8"/>
+		<style>
+		    body {
+				background: white fixed no-repeat left top;
+				color: black;
+				font-family: sans-serif;
+				line-height: 1.8em;
+				margin: 0 auto;
+				padding: 2em 25px 2em 50px;
+				max-width: 1270px;
+			}
 
-<h2 id="sec-toc">Table of contents</h2>
-<ul>
-  <li><a href="#sec-intro">1. Introduction</a></li>
-  <li><a href="#sec-vocab">2. Used vocabularies</a></li>
-  <li><a href="#sec-classes">3. Used classes</a></li>
-  <li><a href="#sec-properties">4. Used properties</a></li>
-  <li><a href="#sec-about">5. How to use this documentation</a></li>
-</ul>
+			a {
+				background-color: transparent;
+			}
 
-<div class="intro">
-<h2 id="sec-intro">Introduction</h2>
+			span.issue a {
+				
+				color: red;
+				text-decoration: none;
+				font-size: 150%;
+				
+			}
 
-<p>This site generates SPARQL-endpoint documentation on the fly. Documentation describes the implicit and explicit classes and properties used in the endpoint. You can change the endpoint and select distinct graph, or use default. </p>    
-<p ng-hide="ready">This documentation is currently being generated ...</p>
-<p ng-show="ready">The generated documentation is ready. You can <a href="{{b64}}">'Save as'</a> static version of this documentation ("Early prototype").</p>
-</div>
+			a:link {
+				color: #00c;
+			}
 
-<div class="generated" ng-show="validEndpoint">
-<!-- These are shown only if the endpoint is valid -->
+			a:visited {
+				color: #609;
+			}
 
-<div class="vocab">
-<h2 id="sec-vocab">Used vocabularies</h2>
-<p>This endpoint uses following vocabularies and namespaces.</p>
-    <div class="box">
-      <div ng-repeat="(key,prefix) in namespaces">
-      PREFIX {{prefix}}: &lt;<a href="{{key}}">{{key}}</a>&gt;</br>
-    </div>
-        
-    </div>
-</div>
+			a:active {
+				color: #c00;
+			}
 
-<div class="glance">
-<h2 id="sec-classes">Used classes</h2>
-<p>These classes are used to describe resources in this endpoint.</p>
-<div class="box">
-   |<span ng-repeat="class in classes"> <a href="#{{class.c.resolved.prefixed}}">{{class.c.resolved.prefixed}}</a> |</span> 
-</div>
+			a:link img, a:visited img {
+				border: none;
+			}
+			
+			header {
+				list-style-type: none;
+			}
+			section {
+				border-top: 2px groove;
+				margin-top: 4em;
+				padding-top: 2em;
+			}
 
-<div ng-repeat="class in classes" class="specterm" id="{{class.c.resolved.prefixed}}">
-    <h3>{{class.c.resolved.prefixed}}</h3>
-    <p><b>URI:</b> <a href="{{class.c.value}}">{{class.c.value}}</a></p>
-    <p><i>This class is used by this endpoint. Follow the uri to the original specification. These are the used properties.</i></p>
-    <h4>List of of used properties</h4>
-    <div class="box">
-        |<span ng-repeat="property in class.c.properties"> <a href="#{{property.p.resolved.prefixed}}">{{property.p.resolved.prefixed}}</a> |</span>
-    </div>
-    <h4>Example query</h4>
-    <code><pre>{{class.c.example}}</pre></code>
-</div> 
-</div>
+			h1, h2, h3, h4, h5, h6 {
+				background: white;
+				color: #005a9c;
+				font-weight: normal;
+				text-align: left;
+			}
 
-<div class="glance">
-<h2 id="sec-properties">Used properties</h2>
-<p>These are the properties used in this endpoint. Properties could be used by multiple classes that describe the resources.</p>
-<div class="box">
-   |<span ng-repeat="property in properties"> <a href="#{{property.prefixed}}">{{property.prefixed}}</a> |</span> 
-</div>
+			h1 {
+				clear: both;
+				font-size: 220%;
+				margin-top: 2em
+			}
 
-<div ng-repeat="(key,property) in properties" class="specterm" id="{{property.prefixed}}">
-    <h3>{{property.prefixed}}</h3>
-    <p><b>Identifier:</b> {{key}}</p>
-</div>
+			h2 {
+				border-top: 2px groove;
+				font-size: 170%;
+				margin-top: 2em;
+				padding-top: 0.6em;
+			}
 
-</div>
+			h3 {
+				border-top: 1px groove;
+				font-size: 150%;
+				margin-top: 2em;
+				padding-top: 2em;
+			}
 
+			h4 {
+				font-size: 120%;
+				margin: 1em 0 0.5em;
+			}
 
-</div>
+			.hide {
+				display: none;
+			}
 
+			pre {
+				background-color: #ffec8b;
+				color: black;
+				font-family: monospace;
+				line-height: 1.5em;
+				padding: 1.5em 2em;
+			}
 
-      
-    </body>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/modules.js"></script>
-    <script src="js/controls.js"></script>
+			pre strong {
+				color: #a00;
+				font-weight: bold;
+			}
+
+			dt {
+				font-weight: bold;
+				margin: 0.5em 0 0 0;
+			}
+
+			dd {
+				margin: 0 0 0 3em;
+			}
+
+			code, tt {
+				font-family: monospace;
+			}
+
+			.box {
+				font-size: 12px/100%;
+				padding: 10px;
+				background-color: #efeff8;
+			}
+
+			line {
+				white-space: nowrap;
+				width: 300px;
+				overflow: hidden;
+			}
+
+			line br {
+				display: none;
+			}
+
+			line * {
+				display: inline;
+				white-space: nowrap;
+			}
+
+			select, input {
+				width: 300px;
+				padding: 5px;
+				margin: 0;
+				-webkit-border-radius: 4px;
+				-moz-border-radius: 4px;
+				border-radius: 4px;
+				background: #fff;
+				outline: none;
+				border: 0;
+				display: inline-block;
+				-webkit-appearance: none;
+				-moz-appearance: none;
+				appearance: none;
+				cursor: pointer;
+				font-size: 20px;
+			}
+
+			.back {
+				float: right;
+				font-size: small;
+			}
+			
+			.count {
+				padding: 1px;
+				-webkit-border-radius: 4px;
+				-moz-border-radius: 4px;
+				border-radius: 4px;
+				color: white;
+				background: black;
+				font-size: 10px;
+				vertical-align: middle;
+				margin-left: 3px;
+				margin-right: 5px;
+			}
+			
+			
+			.pcount {
+				background: #b7b7dc;
+			}
+			
+			
+		</style>
+	</head>
+	<body ng-controller="MainCtrl">
+		<article>
+			<header>
+				<hgroup>
+					<h1 contenteditable="true" ng-model="title" ng-cloak>{{title}}</h1>
+					<h2>{{date | date:'dd MMMM yyyy'}}</h2>
+				</hgroup>
+				<dl>
+					<dt>
+						Input endpoint:
+					</dt>
+					<dd>
+						<input ng-model="endpoint" ng-cloak>
+						</input>
+					</dd>
+					<dd ng-hide="validEndpoint" style="color:red;" ng-cloak>
+						<b>Could not connect to the endpoint!</b>
+					</dd>
+					<span ng-show="validEndpoint">
+					<dt>
+						Select graph:
+					</dt>
+					<dd ng-show="querying"> Querying graphs ...</dd>
+					<dd ng-show="!querying && validEndpoint">
+						<select ng-model="selectedGraph" ng-options="graph as graph for graph in graphs"></select>
+					</dd>
+					<dt>
+						<button ng-click="generate()">Generate!</button>
+					</dt>
+					</span>
+
+				</dl>
+				</header>
+			<section>
+				<h2 id="sec-toc">Table of contents</h2>
+				<ol>
+					<li>
+						<a href="#sec-intro">Introduction</a>
+					</li>
+					<li ng-show="classes">
+						<a href="#sec-vocab">Vocabularies in use</a>
+					</li>
+					<li ng-show="classes">
+						<a href="#sec-classes">Classes in use</a>
+					</li>
+					<li ng-show="properties">
+						<a href="#sec-properties">Properties in use</a>
+					</li>
+					<li ng-show="ready">
+						<a href="#sec-assesment">Assesment</a>
+					</li>
+					<li ng-show="ready">
+						<a href="#sec-issues">Issues</a>
+					</li>
+				</ol>
+			</section>
+			<section>
+				<h2 id="sec-intro">Introduction</h2>
+				<p ng-hide="ready">
+					This site generates SPARQL-endpoint documentation on the fly. Documentation describes the implicit and explicit classes and properties used in the endpoint. You can change the endpoint and select distinct graph, or use default.
+				</p>
+				<p ng-show="generating">
+					This documentation is currently being generated ...
+				</p>
+				<p ng-show="ready">
+					The generated documentation is ready. You can <a href="{{b64}}">'Save as'</a> static version of this documentation ("Early prototype").
+				</p>
+			</section>
+			
+				<!-- These are shown only if the endpoint is valid and classes are queried-->
+				<section ng-show="classes">
+					<h2 id="sec-vocab">Vocabularies in use</h2>
+					<p>
+						This endpoint uses following vocabularies and namespaces. Descriptions of the resources are loaded from the used namespace. If the used namespace is not deferenceable, <span ng-hide="n.referable" class="issue"><a hreh="#sec-issues"+>!</a> is used to denote an issue with the namespace. 
+					</p>
+					<h4>Namespaces and prefixes at a glance</h4>
+					<div class="box">
+						<div ng-repeat="n in namespaces">
+						 prefix {{n.prefix}}: &lt;<a href="#{{n.prefix}}">{{n.id}}</a>&gt;</br>
+						</div>
+					</div>
+					<p class="back">
+						[<a href="#sec-toc">back to TOC</a>]
+					</p>
+					<div ng-repeat="n in namespaces" id="{{n.prefix}}">
+						<h3>{{n.title || n.id}}&nbsp;&nbsp;&nbsp;<span ng-hide="n.referable" class="issue"><a ng-href="#ISSUE_{{n.id}}"+>!</a></span></h3>
+						<b>Vocabulary URI: </b><a target="_blank" ng-href="n.id">{{n.id}}</a></br>
+						<div>
+							<h4>Terms at a glance</h4>
+							<div class="box">
+								<span ng-show="n.classes"><b>Classes:</b> <span ng-repeat="class in n.classes"><a href="#{{class.prefixed}}">{{class.prefixed}}</a><span class="count pcount">{{class.count}}</span> </span></span>
+								<span ng-show="n.classes && n.properties"></br></span>
+								<span ng-show="n.properties"><b>Properties:</b> <span ng-repeat="property in n.properties"><a href="#{{property.prefixed}}">{{property.prefixed}}</a><span class="count pcount">{{property.count}}</span> </span></span>
+							</div>
+						</div>
+						<p class="back">
+							[<a href="#sec-vocab">back to vocabularies</a>]
+						</p>
+					</div>
+
+				</section>
+			<section ng-show="classes">
+				<h2 id="sec-classes">Classes in use</h2>
+				<p>
+					These classes are used to describe resources in this endpoint / graph.
+				</p>
+				<div class="box">
+					<span ng-repeat="class in classes"><a title="{{''+class.count+' instances'}}" ng-href="#{{class.prefixed}}">{{class.prefixed}}</a><span ng-hide="$last"> | </span></span>
+				</div>
+				<p class="back">
+						[<a href="#sec-toc">back to TOC</a>]
+				</p>
+
+				<div ng-repeat="class in classes" class="specterm" id="{{class.prefixed}}">
+					<h3>{{class.prefixed}} <span class="count">{{class.count}} instances</span></h3>
+					<p>
+						<b>Identifier: </b><a target="_blank" ng-href="{{class.id}}">{{class.id}}</a></br>
+						<b>Namespace: </b><a ng-href="#{{class.prefix}}">{{class.namespace.id}}</a></br>
+						<span ng-show="class.label"><b>Label:</b> {{class.label}}</br></span>
+						<span ng-show="class.comment"><b>Comment:</b> {{class.comment}}</br></span>
+					</p>
+					<p>
+						<i>This class is used by this endpoint / graph. Follow the identifier to the original specification. These are the used properties.</i>
+					</p>
+					<h4>Properties at a glance</h4>
+					<div class="box">
+						<span ng-repeat="p in class.properties"><a title="{{((p.count/class.count)*100).toFixed(0)}}%" href="#{{p.property.prefixed}}">{{p.property.prefixed}}</a><span class="count pcount">{{p.count}}</span> </span>
+					</div>
+					<h4>Example query</h4>
+					<p><i>Notice that this query is automatically generated and uses all of the properties associated with this type of instances. Without the LIMIT-option, this query will return {{((class.properties[class.properties.length-1].count/class.count)*100).toFixed(0)}}% of the {{class.prefixed}}-instances.</i></p>
+					<code>
+						<pre>{{class.example}}</pre>
+					</code>
+					<p class="back">
+						[<a href="#sec-classes">back to class list</a>]
+					</p>
+				</div>
+			</section>
+<div class="generated" ng-show="ready">
+			<section>
+				<h2 id="sec-properties">Properties in use</h2>
+				<p>
+					These are the properties used in this endpoint. Properties could be used by multiple classes that describe the resources.
+				</p>
+				<div class="box">
+					<span ng-repeat="property in properties"><a href="#{{property.prefixed}}">{{property.prefixed}}</a><span class="count pcount">{{property.count}}</span> </span>
+				</div>
+				<div ng-repeat="property in properties" class="specterm" id="{{property.prefixed}}">
+					<h3>{{property.prefixed}} <span class="count">{{property.count}} uses</span></h3>
+					<p>
+						<b>Identifier: </b><a href="{{property.id}}">{{property.id}}</a></br>
+						<b>Namespace: </b><a href="#{{property.prefix}}">{{property.namespace.id}}</a></br>
+						<span ng-show="property.label"><b>Label:</b> {{property.label}}</br></span>
+						<span ng-show="property.comment"><b>Comment:</b> {{property.comment}}</br></span>
+					</p>
+					<h4>Classes using this property</h4>
+					<div class="box" ng-show="property.classes">
+						<span ng-repeat="class in property.classes"><a href="#{{class.prefixed}}">{{class.prefixed}}</a><span class="count pcount">{{class.count}}</span> </span>
+					</div>
+					<p class="back">
+						[<a href="#sec-properties">back to properties</a>]
+					</p>
+				</div>
+			</section>
+			<section>
+				<h2 id="sec-assesment">Assesment</h2>
+				<p>This assesment is based on quantity of resources calculated from the endpoint:</p>
+				<p>
+				Number of Namespaces (N) = {{assesment.N}}</br>
+				Number of Classes (C) = {{assesment.C}}</br>
+				Number of Properties (P) = {{assesment.P}}</br>
+				</br>
+				Number of class Instances (I) = {{assesment.I}}</br>
+				Number of used Properties (Pu) = {{assesment.Pu}}</br>
+				</br>
+				Number of unresolved Namespaces (UN) = {{assesment.UN}}</br>
+				Number of unresolved Classes (UC) = {{assesment.UC}}</br>
+				Number of unresolved Properties (UP) = {{assesment.UP}}</br>
+				</br>
+				Number of unresolved Instances (UI) = {{assesment.UI}}</br>
+				Number of unresolved Property usage (UPu) = {{assesment.UPu}}</br>
+				</p>
+				<p> 1 - (( (UI+UPu)/(I+Pu) + (UN+UC+UP) / (N+C+P) ) / 2) = {{1.0-(((assesment.UI+assesment.UPu)/(assesment.I+assesment.Pu) + (assesment.UN+assesment.UC+assesment.UP)/(assesment.N+assesment.C+assesment.P))/2).toFixed(2)}}</p>
+			</section>
+			<section>
+				<h2 id="sec-issues">Issues</h2>
+				<p>These issues are automatically generated from the selected endpoints. Issues are deviations from the good practices in use of Linked Data. Issues are related to the functionality of the endpoint and the use of vocabularies. </p>
+				<div class="specterm">
+					<ol>
+						<li ng-repeat="(key,issue) in issues" id="{{key}}">
+							{{issue}}
+						</li>
+					</ol>
+				</div>
+			</section>
+			</div>
+		</article>
+	</body>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
+	<script src="js/underscore-min.js"></script>
+	<script src="js/angular-underscore.js"></script>
+	<script src="js/main.js"></script>
+	<script src="js/modules.js"></script>
+	<script src="js/controls.js"></script>
 </html>

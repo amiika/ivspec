@@ -3,12 +3,19 @@ body {
   color: black;
   font-family: sans-serif;
   line-height: 1.8em;
-  margin: 0;
-  padding: 2em 1em 2em 70px;
+  margin: 0 auto;
+  padding: 2em 25px 2em 50px;
+  max-width: 1270px;
 }
+
 
 a {
   background-color: transparent;
+}
+
+span.issue a {
+	color: red;
+	text-decoration: none;
 }
 
 a:link {
@@ -92,9 +99,9 @@ toc {
 }
 
 .box {
-    padding: 5px; 
-    border: dotted; 
-    background-color: #ddd;
+	font-size: 12px/170%;
+    padding: 10px;
+    background-color: #efeff8;
 }
 
 line {
@@ -130,3 +137,8 @@ select, input {
     cursor:pointer;
     font-size: 20px;
 }
+
+.back { 
+	float: right; 
+	font-size: small;
+	}

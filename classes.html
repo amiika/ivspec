@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html ng-app="vis">
+  <head>
+    <meta charset="utf-8">
+    <title>Class visualization</title>
+    <script src="js/d3.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.1/angular.js"></script>
+    <script src="js/underscore-min.js"></script>
+	<script src="js/angular-underscore.js"></script>
+	<script src="js/vis.js"></script>
+	<script src="js/modules.js"></script>
+	<script src="js/controls.js"></script>
+	<script src="js/colorbrewer.js"></script>
+
+  </head>
+  <body ng-controller="visCtrl">
+  <p><input style="width: 300px;" ng-model="endpoint" ng-cloak></input>
+  <span ng-show="!querying && validEndpoint">
+	<select ng-model="selectedGraph" ng-options="graph as graph for graph in graphs"></select>
+	<span ng-show="propsFound">
+    	<select  style="width:200px;" ng-model="selectedProp" ng-options="pro as pro.prefixed for pro in props"></select>
+    	<span ng-show="selectedProp">
+    	<input style="width: 50px;" ng-model="filter" ng-cloak></input>	
+	 	<button ng-click="query()">Query</button>
+	 	</span>
+	 </span>
+  </span>
+ 
+  </p>
+    <!-- Here's where our visualization will go -->
+    <gh-visualization val="classes"></gh-visualization>
+  </body>
+</html>

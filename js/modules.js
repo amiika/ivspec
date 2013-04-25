@@ -1,5 +1,5 @@
 !(function() {
-    
+var proxy = "http://data.aalto.fi/sproxy.php?service-uri="    
 var filters = angular.module('filters', []);
     
 filters.filter('urlFilter', function () {
@@ -10,18 +10,34 @@ filters.filter('urlFilter', function () {
 
 var services = angular.module('services', []);
 
-services.factory('SparqlService', function($http) {    
+services.factory('SparqlService', function($http) {
+	console.log("Querying endpoint ..."); 
     var sparqlService = {
         query: function(endpoint,query){
               return $http({
                 method: 'GET',
                 headers: { 'Accept' : 'application/sparql-results+json' },
-                url: endpoint,
+                url: proxy+endpoint,
                 params: {query: query}
             })}
     }
     return sparqlService;
 });
+
+services.factory('VocabService', function($http) {
+	console.log("Resolving namespace ...");   
+    var vocabService = {
+        test: function(namespace,query){
+              return $http({
+                method: 'GET',
+                headers: { 'Accept' : 'application/sparql-results+json' },
+                url: "http://localhost:8080/VocabTest/Test",
+                params: {namespace: namespace, query: query,endpoint:"http://localhost:3030/test/sparql"}
+            })}
+    }
+    return vocabService;
+});
+
 
 
 var editable = angular.module('editable', []);
@@ -1098,7 +1114,7 @@ services.factory('PrefixService', function() {
         },
         resolve: function(value){
             value = value.replace("\/","/")
-            
+            var id = value;
             var index = value.lastIndexOf('#');
             var name = "";
             
@@ -1119,16 +1135,16 @@ services.factory('PrefixService', function() {
                 for(key in prefixService.namespaces){
                     if(prefixService.namespaces[key] == value){
                         prefixService.usedNamespaces[value] = key;
-                        return { prefix:key, namespace:value, prefixed: key+":"+name, localName: name }
+                        return { id: id, prefix:key, namespace:value, prefixed: key+":"+name, localName: name }
                     }
                 }
                 // If prefix is not found add new namespace and bogus prefix
-                prefixService.usedNamespaces[value] = "n"+prefixService.localNamespaces;
+                prefixService.usedNamespaces[value] = "na"+prefixService.localNamespaces;
                 prefixService.localNamespaces+=1;
-                return { prefix:prefixService.usedNamespaces[value], namespace:value, prefixed: prefixService.usedNamespaces[value]+":"+name, localName: name }
+                return { id:id, prefix:prefixService.usedNamespaces[value], namespace:value, prefixed: prefixService.usedNamespaces[value]+":"+name, localName: name }
             } else {
                 // If namespace is already been used
-                return { prefix:prefixService.usedNamespaces[value], namespace:value, prefixed: prefixService.usedNamespaces[value]+":"+name, localName: name }
+                return { id:id,prefix:prefixService.usedNamespaces[value], namespace:value, prefixed: prefixService.usedNamespaces[value]+":"+name, localName: name }
             }
             
             return null;
