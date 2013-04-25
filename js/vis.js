@@ -17,6 +17,7 @@ function visCtrl($scope, SparqlService, PrefixService,VocabService) {
     $scope.props = undefined;
     $scope.selectedProp = undefined;
     $scope.filter = undefined;
+    $scope.status = "";
     
        // Test if endpoint is valid
     $scope.$watch('endpoint',function(e) {
@@ -40,8 +41,6 @@ function visCtrl($scope, SparqlService, PrefixService,VocabService) {
     
     $scope.query = function() {
     	if($scope.selectedProp!==undefined) {
-    		console.log($scope.filter);
-    		console.log(isInt(parseInt($scope.filter)))
     		getClasses($scope.endpoint,$scope.selectedGraph,$scope.selectedProp,$scope.filter);
     	}
     }
@@ -138,34 +137,34 @@ function ValidUrl(str) {
             var classesInUse = [];
             var p = [];
             for(i = 0; i < data.length; i++) {
+            	
             	if(data[i].c["xml:lang"]==undefined || data[i].c["xml:lang"]=="fi") {
             	var resolved = {};
+            	
             	if(ValidUrl(data[i].c.value)) {
                 var resolved = PrefixService.resolve(data[i].c.value);
                 if(data[i].l!==undefined) resolved.label = data[i].l.value;
                 
+                console.log("Resolved class:")
                 console.log(resolved);
                 if(resolved.namespace!==null) {
                 if(namespaces.length==0) {
                 	namespaces.push(resolved.namespace);
-                	resolved.color=0;
                 } else {
                 	var news = true;
                 	for(n in namespaces) { 
                 		if(namespaces[n]==resolved.namespace) {
-                			resolved.color=n;
                 			news = false;
                 		}
                 	}
                 	if(news) {
                 		namespaces.push(resolved.namespace);
-                		resolved.color=(namespaces.length-1);
                 	}
-                }
-                } } else resolved.label=data[i].c.value;
+                } }
+                } else resolved.label=data[i].c.value;
                 
                 resolved.count = parseInt(data[i].count.value);
-                resolved.r = Math.max(Math.log(data[i].count.value/((800/1200)*1))*20,40);
+                resolved.r = Math.max(Math.log(data[i].count.value/((800/1200)*3))*15,40);
                 
                 if(resolved!=null) {
                     classesInUse.push(resolved);
@@ -174,10 +173,10 @@ function ValidUrl(str) {
                     data.splice(i--,1);               
                 }
                 
-            }
+            
             
             $scope.classes=classesInUse;
-            }
+            } }
             });
           }
 }
@@ -187,10 +186,8 @@ vis.directive('ghVisualization', function () {
   // constants
   var margin = 20,
     width = 960,
-    height = 500 - .5 - margin,
-    color = d3.scale.ordinal()
-    .domain(["6TH", "7TH", "5TH", "4TH"])
-    .range(colorbrewer.RdBu[4]);
+    height = 500 - .5 - margin;
+
     //color = d3.interpolateRgb("#f77", "#77f");
 
   return {
@@ -208,10 +205,23 @@ vis.directive('ghVisualization', function () {
     var svg = d3.select(element[0])
         .append("svg")
           .attr("width", width)
-          .attr("height", height);
+          .attr("height", height)
+          .attr("pointer-events", "all")
+  		  .append('g')
+          .call(d3.behavior.zoom().on("zoom", redraw))
+          .append('g');
+          
+
+    
+		function redraw() {
+		  svg.attr("transform",
+		      "translate(" + d3.event.translate + ")"
+		      + " scale(" + d3.event.scale + ")");
+		}
     	
     	scope.$watch('val',function(data) {
     		if(data!==undefined) {
+    	    console.log("Visualized data:");
     		console.log(data);
     		
     		svg.selectAll('*').remove();
@@ -219,9 +229,21 @@ vis.directive('ghVisualization', function () {
     		
 			var n = 200,
 			    m = 10,
-			    padding = 6,
-			    color = d3.scale.category10().domain(d3.range(m));
-			
+			    padding = 6;
+			    //color = d3.scale.ordinal()
+    			//.domain(["6TH", "7TH", "5TH", "4TH"])
+    			//.range(colorbrewer.RdBu[4]);
+
+      				
+      			//var color = d3.scale.linear()
+    			//.domain([0, d3.max(_.map(data, function(d) { return d.count; }))])
+    			//.range(["blue", "green"]);
+    			
+    			var color = d3.scale.quantize()
+    			.domain([0,d3.max(_.map(data, function(d) { return d.count; }))])
+    			.range(["#FFA300", "#FF661A", "#75BA23","#7E69AA","#009577" ]); 
+
+
 			var nodes = data;
 			
 			/*
@@ -241,8 +263,15 @@ vis.directive('ghVisualization', function () {
 			    .charge(0)
 			    .on("tick", tick)
 			    .start();
-			
+			    			
 			svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+			
+			svg.append('rect')
+	    		.attr('width', width)
+	    		.attr('height', height)
+	    		.attr('fill', 'white')
+
 			
 			svg.selectAll("g .node").data(nodes);
 			 
@@ -270,10 +299,7 @@ vis.directive('ghVisualization', function () {
       		.style("font-size", function(d) { return Math.max(d.r / this.getComputedTextLength() * 6 + "px",20); })
       		.attr("text-anchor", "bottom")
       		.attr("text-anchor", "middle")
-      		.attr("dy", "1.3em");
-      		 
-      		 
-
+      		.attr("dy", "1.3em");      		 
       		 
 			function tick(e) {
 			  	g.each(cluster(10 * e.alpha * e.alpha))
@@ -290,13 +316,13 @@ vis.directive('ghVisualization', function () {
 			
 			  // Find the largest node for each cluster.
 			  nodes.forEach(function(d) {
-			    if (!(d.color in max) || (d.r > max[d.color].r)) {
-			      max[d.color] = d;
+			    if (!(color(d.count) in max) || (d.r > max[color(d.count)].r)) {
+			      max[color(d.count)] = d;
 			    }
 			  });
 			
 			  return function(d) {
-			    var node = max[d.color],
+			    var node = max[color(d.count)],
 			        l,
 			        r,
 			        x,
@@ -338,7 +364,7 @@ vis.directive('ghVisualization', function () {
 			        var x = d.x - quad.point.x,
 			            y = d.y - quad.point.y,
 			            l = Math.sqrt(x * x + y * y),
-			            r = d.r + quad.point.r + (d.color !== quad.point.color) * padding;
+			            r = d.r + quad.point.r + (color(d.count) !== color(quad.point.count)) * padding;
 			        if (l < r) {
 			          l = (l - r) / l * alpha;
 			          d.x -= x *= l;
