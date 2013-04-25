@@ -11,9 +11,38 @@
 	<script src="js/modules.js"></script>
 	<script src="js/controls.js"></script>
 	<script src="js/colorbrewer.js"></script>
+  <style>
+  	div.arrow-down {
+	width:0px; 
+	height:0px; 
+	border-top: 0px;
+	border-left:5px solid transparent;
+	border-right:5px solid transparent;
+	border-top:5px solid #2f2f2f;
+	font-size:0px;
+	line-height:0px;
+	float:right;
+}
+div.arrow-up {
+	width:0px; 
+	height:0px;
+	border-top: 0px;
+	border-left:5px solid transparent;  /* left arrow slant */
+	border-right:5px solid transparent; /* right arrow slant */
+	border-bottom:5px solid #2f2f2f; /* bottom, add background color here */
+	font-size:0px;
+	line-height:0px;
+	float:right;
+}
 
+div.menu {
+	margin: 0; padding: 0;
+}
+</style>
   </head>
   <body ng-controller="visCtrl">
+ <div ng-class="{'arrow-up':show,'arrow-down':!show}" ng-click="show = !show"></div>
+  <div ng-show="show" class="menu">
   <p><input style="width: 300px;" ng-model="endpoint" ng-cloak></input>
   <span ng-show="!querying && validEndpoint">
 	<select ng-model="selectedGraph" ng-options="graph as graph for graph in graphs"></select>
@@ -25,9 +54,9 @@
 	 	</span>
 	 </span>
   </span>
- 
   </p>
+  </div>
     <!-- Here's where our visualization will go -->
-    <gh-visualization val="classes"></gh-visualization>
+    <gh-visualization val="classes" loading="querying"></gh-visualization>
   </body>
 </html>
