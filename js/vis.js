@@ -64,7 +64,7 @@ function visCtrl($scope, SparqlService, PrefixService,VocabService) {
     		" ?s <"+type+"> ?c . "+
     		(graph != "default" ? " } " : "")+
     		" OPTIONAL { ?c ?p ?l . FILTER(STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name') ) }"+
-    		" OPTIONAL { ?s ?p ?l . ?s <"+type+"> ?c .  FILTER(isLiteral(?c) && (STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name')) ) }"+
+    		" OPTIONAL { ?s ?p ?l . ?s <"+type+"> ?c .  FILTER(isNumeric(?c) && (STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name')) ) }"+
     		"} GROUP BY ?c ?l "+
     		(isInt(parseInt(having))?"HAVING(?count > "+having+")":"");
     		
