@@ -189,7 +189,7 @@ function ValidUrl(str) {
                 	}
                 }
                 
-                resolved.r = Math.max(Math.log(data[i].count.value/((800/1200)*3))*15,40);
+               // resolved.r = Math.max(Math.log(data[i].count.value/((800/1200)*3))*15,40);
                 
                 if(resolved!=null) {
                     classesInUse.push(resolved);
@@ -274,7 +274,6 @@ vis.directive('ghVisualization', function () {
 			  return new Array(lineTotal);
 			}
 			 
-			// <g> only needed for nice display in tributary
 			group = svg.append('g')
 			.attr('class',"node")
 				.attr('transform', 'translate(' + [posX, posY] + ')');
@@ -401,6 +400,39 @@ vis.directive('ghVisualization', function () {
     	    console.log("Visualized data:");
     		console.log(data);
     		
+    		var min = d3.min(_.map(data, function(d) { return parseInt(d.count); }))
+    		var max = d3.max(_.map(data, function(d) { return parseInt(d.count); }))
+    		var median = d3.median(_.map(data, function(d) { return d.count; }))
+    		var mean = d3.mean(_.map(data, function(d) { return d.count; }))
+    		
+    		console.log("Min: "+min );
+    		console.log("Max: "+max );	
+    		console.log("Median: "+median );
+    		console.log("Mean: "+mean );
+    		
+    		 var qua = d3.scale.quantize()
+    			.domain([min,max])
+    			.range([40, 60, 80, 90, 100]);
+    		
+    		if(Math.abs(median-mean)>10) {
+    			//console.log("Logarithmic scale");
+    			 //for(d in data) {
+    			 //	data[d].r = Math.max(Math.log(data[d].count/((800/1200)*3))*15,40);
+    			 //}
+    			  console.log("Quantized scale 1-5");
+    			  for(d in data) {
+    			   data[d].r = qua(data[d].count);
+    			   }
+    			}
+    		else {
+    			console.log("Quantized scale 1-5");
+    			  for(d in data) {
+    			   data[d].r = qua(data[d].count);
+    			   }
+    			}
+    		
+    		
+    		
     		svg.selectAll('.node').remove();
     		
     		
@@ -416,10 +448,13 @@ vis.directive('ghVisualization', function () {
     			//.domain([0, d3.max(_.map(data, function(d) { return d.count; }))])
     			//.range(["blue", "green"]);
     			
+
+    			
+
     			
     			var color = d3.scale.quantize()
     			.domain([0,d3.max(_.map(data, function(d) { return d.count; }))])
-    			.range(["#FFA300", "#FF661A", "#75BA23","#7E69AA","#009577" ]); 
+    			.range(["#FFA300", "#FF661A", "#75BA23","#7E69AA","#009577" ]);
 
 
 			var nodes = data;
