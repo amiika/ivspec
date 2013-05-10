@@ -64,7 +64,7 @@ function visCtrl($scope, SparqlService, PrefixService,VocabService) {
     		" ?s <"+type+"> ?c . "+
     		(graph != "default" ? " } " : "")+
     		" OPTIONAL { ?c ?p ?l . FILTER(STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name') ) }"+
-    		" OPTIONAL { ?s ?p ?l . FILTER(STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name') ) }"+
+    		" OPTIONAL { ?s ?p ?l . ?s <"+type+"> ?c .  FILTER(isLiteral(?c) && (STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name')) ) }"+
     		"} GROUP BY ?c ?l "+
     		(isInt(parseInt(having))?"HAVING(?count > "+having+")":"");
     		
@@ -150,6 +150,7 @@ function ValidUrl(str) {
             	
             	// C is a class
             	if(ValidUrl(data[i].c.value)) {
+            	console.log(data[i].c.value+" IS a Class")
                 var resolved = PrefixService.resolve(data[i].c.value);
                 if(data[i].l!==undefined) resolved.label = data[i].l.value;
                 
@@ -175,6 +176,7 @@ function ValidUrl(str) {
                 
                 } 
                 else {
+                	console.log(data[i].c.value+" IS Literal")
                 	// C is not a class. Use c as a label
                 	resolved.label=data[i].c.value;
                 	if(!isNaN(resolved.label)) {
