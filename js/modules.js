@@ -1,5 +1,5 @@
 !(function() {
-var proxy = "http://data.aalto.fi/sproxy.php?service-uri="    
+var proxy = "" // "http://data.aalto.fi/sproxy.php?service-uri="    
 var filters = angular.module('filters', []);
     
 filters.filter('urlFilter', function () {

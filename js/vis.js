@@ -12,7 +12,7 @@ function visCtrl($scope, SparqlService, PrefixService,VocabService) {
 	$scope.propsFound = false;
 	$scope.validEndpoint = true;
     $scope.querying = false;
-    $scope.endpoint = "http://sparql.onki.fi/loa/sparql";
+    $scope.endpoint = "http://localhost:3030/ik/sparql";
     $scope.selectedGraph = undefined;
     $scope.graphs = ["default"];
     $scope.props = undefined;
@@ -64,6 +64,7 @@ function visCtrl($scope, SparqlService, PrefixService,VocabService) {
     		" ?s <"+type+"> ?c . "+
     		(graph != "default" ? " } " : "")+
     		" OPTIONAL { ?c ?p ?l . FILTER(STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name') ) }"+
+    		" OPTIONAL { ?s ?p ?l . FILTER(STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name') ) }"+
     		"} GROUP BY ?c ?l "+
     		(isInt(parseInt(having))?"HAVING(?count > "+having+")":"");
     		
@@ -142,9 +143,12 @@ function ValidUrl(str) {
             var p = [];
             for(i = 0; i < data.length; i++) {
             	
+            	// Exclude other languages
             	if(data[i].c["xml:lang"]==undefined || data[i].c["xml:lang"]=="fi") {
+            		
             	var resolved = {};
             	
+            	// C is a class
             	if(ValidUrl(data[i].c.value)) {
                 var resolved = PrefixService.resolve(data[i].c.value);
                 if(data[i].l!==undefined) resolved.label = data[i].l.value;
@@ -165,9 +169,24 @@ function ValidUrl(str) {
                 		namespaces.push(resolved.namespace);
                 	}
                 } }
-                } else resolved.label=data[i].c.value;
                 
+                // Count is number of class instances
                 resolved.count = parseInt(data[i].count.value);
+                
+                } 
+                else {
+                	// C is not a class. Use c as a label
+                	resolved.label=data[i].c.value;
+                	if(!isNaN(resolved.label)) {
+                		// Count is the numeric value
+                		resolved.count=resolved.label;
+                		if(data[i].l!==undefined) resolved.label = data[i].l.value;
+                	} else {
+                		// Count is the number of instances
+                		resolved.count = parseInt(data[i].count.value);
+                	}
+                }
+                
                 resolved.r = Math.max(Math.log(data[i].count.value/((800/1200)*3))*15,40);
                 
                 if(resolved!=null) {
@@ -180,7 +199,9 @@ function ValidUrl(str) {
             
             
             $scope.classes=classesInUse;
-            } }
+            } 
+            
+           }
             });
           }
 }
@@ -392,6 +413,7 @@ vis.directive('ghVisualization', function () {
       			//var color = d3.scale.linear()
     			//.domain([0, d3.max(_.map(data, function(d) { return d.count; }))])
     			//.range(["blue", "green"]);
+    			
     			
     			var color = d3.scale.quantize()
     			.domain([0,d3.max(_.map(data, function(d) { return d.count; }))])
