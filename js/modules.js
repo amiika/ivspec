@@ -10,6 +10,23 @@ filters.filter('urlFilter', function () {
 
 var services = angular.module('services', []);
 
+services.factory('sharedService', function($rootScope) {
+    var sharedService = {};
+
+    sharedService.message = '';
+
+    sharedService.broadcast = function(msg) {
+        this.message = msg;
+        this.broadcastItem();
+    };
+
+    sharedService.broadcastItem = function() {
+        $rootScope.$broadcast('handleBroadcast');
+    };
+
+    return sharedService;
+});
+
 services.factory('SparqlService', function($http) {
 	console.log("Querying endpoint ..."); 
     var sparqlService = {

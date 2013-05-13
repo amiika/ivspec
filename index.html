@@ -175,6 +175,16 @@
 				background: #b7b7dc;
 			}
 			
+			.node {
+  				stroke: #fff;
+  				stroke-width: 1px;
+			}
+
+.link {
+  fill: none;
+  stroke: #bbb;
+}
+			
 			
 		</style>
 	</head>
@@ -308,6 +318,7 @@
 					</div>
 					<h4>Example query</h4>
 					<p><i>Notice that this query is automatically generated and uses all of the properties associated with this type of instances. Without the LIMIT-option, this query will return {{((class.properties[class.properties.length-1].count/class.count)*100).toFixed(0)}}% of the {{class.prefixed}}-instances.</i></p>
+				<!--	<class-visualization val="class.properties" loading="class.properties"></class-visualization> -->
 					<code>
 						<pre>{{class.example}}</pre>
 					</code>
@@ -377,6 +388,7 @@
 		</article>
 	</body>
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
+	<script src="js/d3.min.js"></script>
 	<script src="js/underscore-min.js"></script>
 	<script src="js/angular-underscore.js"></script>
 	<script src="js/main.js"></script>

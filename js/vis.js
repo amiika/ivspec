@@ -6,7 +6,7 @@ vis.config(['$httpProvider', function($httpProvider) {
 }]);
 
 
-function visCtrl($scope, SparqlService, PrefixService,VocabService) {
+function visCtrl($scope, SparqlService, PrefixService, VocabService, sharedService) {
 	$scope.show = true;
 	$scope.classes = undefined;
 	$scope.propsFound = false;
@@ -19,6 +19,14 @@ function visCtrl($scope, SparqlService, PrefixService,VocabService) {
     $scope.selectedProp = undefined;
     $scope.filter = undefined;
     $scope.status = "";
+    $scope.selectedInstance = undefined;
+    $scope.selectedType = undefined;
+    $scope.instanceData = undefined;
+    
+    $scope.$on('handleBroadcast', function() {
+        console.log(sharedService.message)
+        getInstanceData($scope.endpoint,$scope.selectedGraph,sharedService.message);
+    });
     
        // Test if endpoint is valid
     $scope.$watch('endpoint',function(e) {
@@ -33,6 +41,11 @@ function visCtrl($scope, SparqlService, PrefixService,VocabService) {
          	 $scope.querying = false;
              $scope.validEndpoint = false;
          });
+    });
+    
+       $scope.$watch('selectedType',function(e) {
+    	if($scope.selectedInstance!==undefined)
+    		getInstanceData($scope.endpoint,$scope.selectedGraph,$scope.selectedType);
     });
     
     $scope.$watch('selectedGraph',function(e) {
@@ -59,16 +72,36 @@ function visCtrl($scope, SparqlService, PrefixService,VocabService) {
 	}
 	
 	function classQry(graph,type,having) {
-    		return "SELECT ?l ?c (count(?s) as ?count) WHERE {"+
+    		return "SELECT ?l ?c (count(?s) as ?count) ?ns WHERE {"+
     		(graph != "default" ? " GRAPH <"+graph+"> { " : "")+
     		" ?s <"+type+"> ?c . "+
     		(graph != "default" ? " } " : "")+
     		" OPTIONAL { ?c ?p ?l . FILTER(STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name') ) }"+
-    		" OPTIONAL { ?s ?p ?l . ?s <"+type+"> ?c .  FILTER(isNumeric(?c) && (STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name')) ) }"+
-    		"} GROUP BY ?c ?l "+
+    		" OPTIONAL { ?ns ?p ?l . ?ns <"+type+"> ?c .  FILTER(isNumeric(?c) && (STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name')) ) }"+
+    		"} GROUP BY ?c ?ns ?l "+
     		(isInt(parseInt(having))?"HAVING(?count > "+having+")":"");
-    		
     	}
+    	
+   function instanceQry(graph, instance) {
+   	return "SELECT ?p ?o (count(?o) as ?c) WHERE {"+
+    		(graph != "default" ? " GRAPH <"+graph+"> { " : "")+
+    		"<"+instance+"> ?p ?o . "+
+    		"?s ?p ?o "+
+    		"FILTER(isNumeric(?o) || isLiteral(?o) && ?s != <"+instance+">) "+
+    		//"FILTER(isNumeric(?o)) "+
+    		(graph != "default" ? " } " : "")+
+    		"} GROUP BY ?p ?o"
+   }
+   
+   function instanceTypeQry(graph, type, val) {
+   	return "SELECT ?s ?l WHERE {"+
+    		(graph != "default" ? " GRAPH <"+graph+"> { " : "")+
+    		" ?s <"+type+"> ?o . "+
+    		"FILTER(str(?o) = '"+val+"')"+
+    		" OPTIONAL { ?s ?p ?l . FILTER(STRENDS(STR(?p),'label') || STRENDS(STR(?p),'title') || STRENDS(STR(?p),'name') ) }"+
+    		(graph != "default" ? " } " : "")+
+    		"}"
+   } 
     	
    function getGraphs() {
     $scope.selectedGraph = "default";
@@ -131,7 +164,104 @@ function ValidUrl(str) {
     return true;
   }
 }
-    	
+
+String.prototype.splice = function( idx, rem, s ) {
+    return (this.slice(0,idx) + s + this.slice(idx + Math.abs(rem)));
+};
+
+   function getInstanceData(endpoint, graph, res) {
+        $scope.querying = true; 
+        if(res.id!==undefined && !res.prop) {
+         // IF resource is atomic
+         var instance = res.resource;
+         SparqlService.query(endpoint,instanceQry(graph,res.id))
+         .success(function(data) {
+         	var iData = [];
+         	$scope.querying = false; 
+            data = data.results.bindings;
+            console.log(data);
+            
+            for(i = 0; i < data.length; i++) {
+            	
+            	var resolved = {instance:instance};
+            	
+            	// p is property
+            	if(ValidUrl(data[i].p.value)) {
+                var resolved = PrefixService.resolve(data[i].p.value);
+                resolved.property = data[i].p.value;
+                if(data[i].l!==undefined) resolved.label = data[i].l.value;
+                else if(isNaN(data[i].o.value)) {
+                	
+                	resolved.label = data[i].o.value;
+                	
+                	resolved.count = parseInt(data[i].c.value);
+                	resolved.numeric=false;
+                }
+                else {
+                	resolved.label = resolved.localName;
+                	resolved.count = parseInt(data[i].o.value);
+                	resolved.numeric=true;
+                }
+                console.log(resolved);
+                
+         	   resolved.prop=true;
+               
+                
+                iData.push(resolved);
+               
+              }
+             }
+             $scope.classes = iData;
+            
+         });
+        } else {
+        // IF resouce is aggregated
+
+        var prop = res.property;
+        var val = res.label;
+         
+         //FIXME: Ugly hack?
+        if(res.numeric) {
+        	prop = res.id;
+        	val = res.count; }
+   
+      
+       console.log("Getting instances ...");
+        	
+        SparqlService.query(endpoint,instanceTypeQry(graph,prop,val))
+         .success(function(data) {
+         	var iData = [];
+         	$scope.querying = false; 
+            data = data.results.bindings;
+            console.log(data);
+            
+            for(i = 0; i < data.length; i++) {
+            	
+            	var resolved = {};
+            	
+            	// p is property
+            	if(ValidUrl(data[i].s.value)) {
+                var resolved = PrefixService.resolve(data[i].s.value);
+                
+                if(data[i].l!==undefined) resolved.label = data[i].l.value;
+                else resolved.label = resolved.localName;
+                
+                
+                resolved.count = 1;
+                
+                iData.push(resolved);
+               
+              }
+             }
+             $scope.classes = iData;
+             console.log(iData);
+            
+         });
+        
+        	
+        }
+    }
+    
     function getClasses(endpoint,graph,type,filter) {
         $scope.querying = true; 
          SparqlService.query(endpoint,classQry(graph,type.id,filter))
@@ -146,7 +276,7 @@ function ValidUrl(str) {
             	// Exclude other languages
             	if(data[i].c["xml:lang"]==undefined || data[i].c["xml:lang"]=="fi") {
             		
-            	var resolved = {};
+            	var resolved = {property:type.id};
             	
             	// C is a class
             	if(ValidUrl(data[i].c.value)) {
@@ -181,8 +311,14 @@ function ValidUrl(str) {
                 	resolved.label=data[i].c.value;
                 	if(!isNaN(resolved.label)) {
                 		// Count is the numeric value
-                		resolved.count=resolved.label;
+                		// FIXME: Two resources with the same value
+                		if(parseInt(data[i].count.value)>1) console.log("FIXME: Two resources in one!");
+                		
+                		resolved.count = resolved.label;
+                		resolved.id = data[i].ns.value; 
+                		
                 		if(data[i].l!==undefined) resolved.label = data[i].l.value;
+                		
                 	} else {
                 		// Count is the number of instances
                 		resolved.count = parseInt(data[i].count.value);
@@ -208,7 +344,7 @@ function ValidUrl(str) {
           }
 }
 
-vis.directive('ghVisualization', function () {
+vis.directive('ghVisualization', function (sharedService) {
 
   // constants
   var margin = 20,
@@ -317,7 +453,7 @@ vis.directive('ghVisualization', function () {
     		if(data!==undefined) {
     			
     			
-    					function tick(e) {
+    		function tick(e) {
 			  	g.each(cluster(10 * e.alpha * e.alpha))
 			     .each(collide(.1))
 			     .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
@@ -332,6 +468,7 @@ vis.directive('ghVisualization', function () {
 			
 			  // Find the largest node for each cluster.
 			  nodes.forEach(function(d) {
+			  	
 			    if (!(color(d.count) in max) || (d.r > max[color(d.count)].r)) {
 			      max[color(d.count)] = d;
 			    }
@@ -422,12 +559,16 @@ vis.directive('ghVisualization', function () {
     			  console.log("Quantized scale 1-5");
     			  for(d in data) {
     			   data[d].r = qua(data[d].count);
+    			   // FIXME: Ugly hack ?
+    			   if(data[d].r==undefined) data[d].r = 40;
     			   }
     			}
     		else {
     			console.log("Quantized scale 1-5");
     			  for(d in data) {
     			   data[d].r = qua(data[d].count);
+    			     // FIXME: Ugly hack ?
+    			   if(data[d].r==undefined) data[d].r = 40;
     			   }
     			}
     		
@@ -497,18 +638,21 @@ vis.directive('ghVisualization', function () {
 			    			
 			g.append("text")
       		.attr("class","text")
-      		.text(function(d) { return d.label!==undefined ? d.label : d.prefixed })
+      		//FIXME: HACK HACK
+      		.text(function(d) { return d.label=="true" ? "Käynnissä" : d.label=="false" ? "Päättynyt" : d.label!==undefined ? d.label : d.prefixed })
       		.style("font-size", function(d) { return 2*d.r / this.getComputedTextLength() * 9 + "px"; })
       		.attr("text-anchor", "middle")
-      		.attr("dy", ".2em")
+      		.attr("dy", ".2em");
       		
       		g.append("text")
       		.attr("class","text")
-      		.text(function(d) { return d.count })
+      		.text(function(d) { return d.count.length>4 ? d.count.splice( d.count.length-3, 0, " " ) : d.count;  })
       		.style("font-size", function(d) { return Math.max(d.r / this.getComputedTextLength() * 6 + "px",20); })
       		.attr("text-anchor", "bottom")
       		.attr("text-anchor", "middle")
-      		.attr("dy", "1.3em");      		 
+      		.attr("dy", "1.3em");   
+      		
+      		g.on("click",function(d) { sharedService.broadcast(d); });   		 
       		 
 
     		

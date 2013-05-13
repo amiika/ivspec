@@ -164,7 +164,8 @@ function MainCtrl($scope, $location, SparqlService, PrefixService,VocabService) 
 	                           		$scope.properties[data[item].p.value].classes.push($scope.classes[c]);
 	                           }
 	                           
-	                           classProperties[data[item].p.value] = {count:parseInt(data[item].count.value),property:$scope.properties[data[item].p.value]};
+	                           // TODO: Literals and datatypes?
+	                           classProperties[data[item].p.value] = {count:parseInt(data[item].count.value),subject:$scope.classes[c],property:$scope.properties[data[item].p.value],object:[]};
 	                           exampleStart+=" ?"+resolved.localName
 	                           example+="\n?s "+resolved.prefixed+" ?"+resolved.localName+" .";
 	                           $scope.assesment.Pu+=parseInt(data[item].count.value);
@@ -176,9 +177,15 @@ function MainCtrl($scope, $location, SparqlService, PrefixService,VocabService) 
                           		
                           // If property references other object push this to list
 	                      if(data[item].type!==undefined) {
-	                      	if(resolved.objectProperty===undefined) resolved.objectProperty = [];
-			                  var object = getObjectById($scope.classes,data[item].type.value);
-	                          if(object!==undefined) resolved.objectProperty.push({s:$scope.classes[c],p:object}); 
+								if(resolved.objectProperty===undefined) resolved.objectProperty = [];
+			                	var object = getObjectById($scope.classes,data[item].type.value);
+			                  
+	                          if(object!==undefined) {
+	                          // Local class list
+	                      		classProperties[data[item].p.value].object.push(object);
+	                      	  // Global property list
+	                          	resolved.objectProperty.push({s:$scope.classes[c],o:object});
+	                          }
 	                          else { 
 	                          	$scope.issues["ISSUE_"+data[item].type.value] = "Class "+data[item].type.value+" referenced, but not found!";
 	                          	console.log("ISSUE: Unknown error!"); 
